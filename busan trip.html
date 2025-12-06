@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>釜山與慶州八日遊</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <style>
+        /* Custom Tailwind Configuration & Base Styles (Updated to Blue-Purple Theme) */
+        :root {
+            --primary-light: #f5f3ff; /* Very light purple/lavender (Violet-50) */
+            --primary-accent: #6366f1; /* Indigo-500 for accents */
+            --text-dark: #374151; /* Gray-700 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--primary-light);
+            color: var(--text-dark);
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Mobile App Feel: Fixed bottom bar and full-height content */
+        .app-container {
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff; /* Main App Content Area */
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+        }
+        /* Style for horizontal scrolling date bar */
+        .scroll-container::-webkit-scrollbar {
+            display: none; /* Hide scrollbar for a cleaner mobile look */
+        }
+        .scroll-container {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        /* Minimalist Button Style */
+        .btn-minimal {
+            transition: all 0.2s;
+            @apply px-4 py-2 rounded-lg font-medium shadow-sm;
+        }
+        .btn-minimal:hover {
+             @apply shadow-md;
+        }
+        /* Custom alert/confirm style to replace native alert */
+        .custom-dialog {
+            transition: opacity 0.3s ease;
+        }
+    </style>
+</head>
+<body class="p-0 m-0">
+
+<div class="app-container">
+    <header class="p-4 bg-violet-100 shadow-sm sticky top-0 z-10 rounded-b-xl flex justify-between items-center">
+        <div class="flex-grow">
+            <h1 class="text-xl font-bold text-indigo-700">釜山與慶州八日遊 (2026) 🇰🇷</h1>
+            <p class="text-sm text-gray-500 mt-1">日系極簡・輕鬆規劃</p>
+        </div>
+        <div class="flex space-x-2 ml-4">
+            <button class="text-2xl text-emerald-600 hover:text-emerald-800 p-1" onclick="setActiveTab('todo')">
+                ✅
+            </button>
+            <button class="text-2xl text-indigo-600 hover:text-indigo-800 p-1" onclick="setActiveTab('shopping')">
+                🛒
+            </button>
+        </div>
+    </header>
+
+    <nav id="date-nav" class="scroll-container overflow-x-scroll whitespace-nowrap py-3 px-2 bg-violet-100/50 border-b border-violet-200 sticky top-[72px] z-10">
+        </nav>
+
+    <main class="flex-grow p-4 overflow-y-auto">
+        <div id="content-display">
+            </div>
+    </main>
+
+    <footer class="sticky bottom-0 w-full max-w-[600px] mx-auto bg-white border-t border-gray-100 shadow-xl rounded-t-xl z-20 p-2">
+        <div class="flex justify-around text-sm">
+            <button class="tab-btn flex flex-col items-center py-1 text-indigo-600 font-semibold" data-tab="itinerary">
+                <span class="text-xl">📅</span>
+                行程表
+            </button>
+            <button class="tab-btn flex flex-col items-center py-1 text-gray-500" data-tab="expenses">
+                <span class="text-xl">💰</span>
+                記帳分帳
+            </button>
+            <button class="tab-btn flex flex-col items-center py-1 text-gray-500" data-tab="map">
+                <span class="text-xl">📍</span>
+                地圖
+            </button>
+            <button class="tab-btn flex flex-col items-center py-1 text-gray-500" data-tab="backup">
+                <span class="text-xl">💡</span>
+                備用景點
+            </button>
+        </div>
+    </footer>
+</div>
+
+<div id="itinerary-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm">
+        <h3 class="text-lg font-semibold mb-4 text-indigo-700" id="modal-title">新增行程</h3>
+        <input type="hidden" id="edit-activity-index">
+        <input type="hidden" id="edit-date">
+
+        <label for="activity-time" class="block text-xs font-medium text-gray-500 mt-2">時間 (HH:MM)</label>
+        <input type="time" id="activity-time" class="w-full p-2 border border-gray-300 rounded-lg mt-1 focus:ring-indigo-500 focus:border-indigo-500">
+
+        <label for="activity-location" class="block text-xs font-medium text-gray-500 mt-4">地點</label>
+        <input type="text" id="activity-location" placeholder="例如：海東龍宮寺" class="w-full p-2 border border-gray-300 rounded-lg mt-1 focus:ring-indigo-500 focus:border-indigo-500">
+
+        <label for="activity-notes" class="block text-xs font-medium text-gray-500 mt-4">備註</label>
+        <textarea id="activity-notes" rows="3" placeholder="例如：記得搭公車" class="w-full p-2 border border-gray-300 rounded-lg mt-1 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+
+        <div class="flex justify-end space-x-3 mt-6">
+            <button class="btn-minimal bg-gray-200 text-gray-700" onclick="closeItineraryModal()">取消</button>
+            <button class="btn-minimal bg-indigo-500 text-white" onclick="saveActivity()">儲存</button>
+        </div>
+    </div>
+</div>
+
+<div id="expense-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm">
+        <h3 class="text-lg font-semibold mb-4 text-indigo-700" id="expense-modal-title">新增/編輯支出</h3>
+        <input type="hidden" id="edit-expense-id">
+
+        <label for="expense-modal-desc" class="block text-xs font-medium text-gray-500 mt-2">項目描述</label>
+        <input type="text" id="expense-modal-desc" placeholder="例如：斜坡滑車門票" class="w-full p-2 border border-gray-300 rounded-lg mt-1 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+
+        <div class="flex space-x-2 mt-4">
+            <div class="w-2/3">
+                <label for="expense-modal-amount" class="block text-xs font-medium text-gray-500">金額</label>
+                <input type="number" id="expense-modal-amount" placeholder="金額" class="w-full p-2 border border-gray-300 rounded-lg mt-1 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+            </div>
+            <div class="w-1/3">
+                <label for="expense-modal-currency" class="block text-xs font-medium text-gray-500">幣別</label>
+                <select id="expense-modal-currency" class="w-full p-2 border border-gray-300 rounded-lg mt-1 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white">
+                    <option value="KRW">KRW ₩</option>
+                    <option value="TWD">TWD NT$</option>
+                </select>
+            </div>
+        </div>
+        
+        <label class="flex items-center space-x-2 text-sm text-gray-600 mt-4">
+            <input type="checkbox" id="expense-modal-shared" class="form-checkbox text-indigo-600 rounded">
+            <span>是否為共享費用 (分帳)</span>
+        </label>
+
+        <div id="expense-members-selection" class="mt-3 hidden p-2 bg-violet-50 rounded-lg">
+            <p class="text-xs text-gray-500 mb-1">分帳成員 (逗號分隔)</p>
+            <input type="text" id="expense-modal-members" placeholder="User A, User B" class="w-full p-2 border border-violet-300 rounded-lg text-sm">
+        </div>
+
+        <div class="flex justify-end space-x-3 mt-6">
+            <button class="btn-minimal bg-gray-200 text-gray-700" onclick="closeExpenseModal()">取消</button>
+            <button class="btn-minimal bg-indigo-500 text-white" onclick="saveExpense()">儲存</button>
+        </div>
+    </div>
+</div>
+
+<div id="list-add-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm">
+        <h3 class="text-lg font-semibold mb-4 text-indigo-700" id="list-modal-title">新增清單項目</h3>
+        <input type="hidden" id="list-modal-type"> <input type="hidden" id="list-modal-edit-id"> <label for="list-modal-text" class="block text-xs font-medium text-gray-500 mt-2">項目內容</label>
+        <input type="text" id="list-modal-text" placeholder="例如：護照、滑雪手套" class="w-full p-2 border border-gray-300 rounded-lg mt-1 focus:ring-indigo-500 focus:border-indigo-500">
+
+        <div class="flex justify-end space-x-3 mt-6">
+            <button class="btn-minimal bg-gray-200 text-gray-700" onclick="closeListModal()">取消</button>
+            <button class="btn-minimal bg-indigo-500 text-white" onclick="saveListItem()">儲存</button>
+        </div>
+    </div>
+</div>
+
+<div id="custom-dialog" class="custom-dialog hidden fixed inset-0 bg-black bg-opacity-50 z-[99] flex items-center justify-center p-4">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-xs">
+        <p id="dialog-message" class="text-gray-800 mb-4"></p>
+        <div id="dialog-actions" class="flex justify-end space-x-3">
+            <button id="dialog-cancel" class="btn-minimal bg-gray-200 text-gray-700 hidden">取消</button>
+            <button id="dialog-confirm" class="btn-minimal bg-indigo-500 text-white">確認</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    // --- Global State (UPDATED FOR BUSAN/GYEONGJU) ---
+    const MOCK_KRW_TO_TWD_RATE = 0.024; // 假設匯率 1 KRW = 0.024 TWD (約 1000 韓元 = 24 台幣)
+    let currentActiveTab = 'itinerary';
+    let currentActiveDate = '';
+    
+    /** 模擬天氣 API 獲取當地天氣資訊 (溫度) */
+    function getWeather(location) {
+        // 根據地點名稱提供模擬天氣數據 (假設四月底/五月初，氣溫較溫暖)
+        const temps = {
+            '金海機場': { temp: 20, icon: '☀️' },
+            '海雲台': { temp: 18, icon: '☁️' },
+            '太宗台': { temp: 17, icon: '🌬️' },
+            '甘川': { temp: 19, icon: '🌤️' },
+            '機張': { temp: 18, icon: '🌤️' },
+            '慶州': { temp: 16, icon: '☁️' },
+            '佛國寺': { temp: 15, icon: '☁️' },
+            '南浦洞': { temp: 20, icon: '☀️' },
+            '西面': { temp: 19, icon: '☀️' },
+            '松島': { temp: 18, icon: '🌤️' },
+            '札嘎其': { temp: 20, icon: '☀️' },
+        };
+        const defaultWeather = { temp: 18, icon: '🌤️' }; // Default for late April/early May
+        
+        // 模糊匹配關鍵字
+        for (const key in temps) {
+            if (location.includes(key) || key.includes(location)) {
+                return temps[key];
+            }
+        }
+        return defaultWeather;
+    }
+
+    // Initial Mock Data (UPDATED FOR NEW DATES: 4/25 - 5/2)
+    let tripData = {
+        // *** DATES UPDATED ***
+        startDate: '2026-04-25', 
+        endDate: '2026-05-02',   
+        itineraries: [
+            // Day 1: 4/25 - 抵達釜山與海雲台
+            {
+                date: '2026-04-25',
+                activities: [
+                    { time: '13:00', location: '金海國際機場 (PUS)', notes: '班機抵達，準備搭乘輕軌或巴士前往市區', weather: getWeather('金海機場'), id: 10 },
+                    { time: '14:30', location: '海雲台區飯店 Check-in', notes: '放下行李，準備開始釜山行程', weather: getWeather('海雲台'), id: 11 },
+                    { time: '16:00', location: '海雲台海水浴場散步', notes: '欣賞海景，可前往冬柏島賞景', weather: getWeather('海雲台'), id: 12 },
+                    { time: '18:30', location: '海雲台市場晚餐', notes: '享用在地海鮮或豬肉湯飯', weather: getWeather('海雲台'), id: 13 },
+                    { time: '20:00', location: 'The Bay 101 夜景', notes: '欣賞美麗的城市夜景與倒影', weather: getWeather('海雲台'), id: 14 },
+                ]
+            },
+            // Day 2: 4/26 - 影島區與斜坡滑車
+            {
+                date: '2026-04-26',
+                activities: [
+                    { time: '10:00', location: '太宗臺 (Taejongdae)', notes: '搭乘 Danubi 循環列車遊覽各景點，欣賞海岸峭壁景觀', weather: getWeather('太宗台'), id: 20 },
+                    { time: '12:30', location: '午餐：影島區特色小店', notes: '尋找烤貝類或海鮮麵', weather: getWeather('太宗台'), id: 21 },
+                    { time: '14:30', location: '松島海上纜車 (Songdo Cable Car)', notes: '體驗透明地板的水晶車廂，欣賞松島灣景', weather: getWeather('松島'), id: 22 },
+                    { time: '16:00', location: '釜山斜坡滑車 (Luge)', notes: '體驗刺激的滑車活動，建議購買多次票', weather: getWeather('斜坡滑車'), id: 23 },
+                    { time: '19:00', location: '西面商圈晚餐/購物', notes: '回到西面，享用晚餐並逛街', weather: getWeather('西面'), id: 24 },
+                ]
+            },
+            // Day 3: 4/27 - 釜山市區文化探索
+            {
+                date: '2026-04-27',
+                activities: [
+                    { time: '09:30', location: '甘川文化村 (Gamcheon Culture Village)', notes: '早點前往避開人潮，準備穿韓服拍照', weather: getWeather('甘川'), id: 30 },
+                    { time: '12:00', location: '午餐：甘川文化村周邊', notes: '簡單用餐後繼續參觀', weather: getWeather('甘川'), id: 31 },
+                    { time: '14:30', location: '龍頭山公園與釜山塔', notes: '從高處俯瞰釜山市景', weather: getWeather('釜山塔'), id: 32 },
+                    { time: '17:00', location: '札嘎其市場 (Jagalchi Market)', notes: '逛逛海產市場，準備挑選晚餐的海鮮', weather: getWeather('札嘎其'), id: 33 },
+                    { time: '19:00', location: '晚餐：札嘎其市場樓上餐廳', notes: '享用現撈海鮮大餐', weather: getWeather('札嘎其'), id: 34 },
+                ]
+            },
+            // Day 4: 4/28 - 東海岸與機張 (美食日)
+            {
+                date: '2026-04-28',
+                activities: [
+                    { time: '10:00', location: '海東龍宮寺 (Haedong Yonggungsa)', notes: '沿海而建的寺廟，風景絕佳，人潮眾多', weather: getWeather('海東'), id: 40 },
+                    { time: '12:30', location: '機張市場 (Gijang Market)', notes: '專門的海鮮市場，主要目標是帝王蟹/紅蟹', weather: getWeather('機張'), id: 41 },
+                    { time: '14:00', location: '午餐/下午茶：機張螃蟹大餐', notes: '與店家確認價格和料理方式，盡情享用', weather: getWeather('機張'), id: 42 },
+                    { time: '17:00', location: '釜山大公園 (Busan Citizens Park)', notes: '晚餐前在公園散步放鬆', weather: getWeather('釜山'), id: 43 },
+                    { time: '19:30', location: '飯店附近晚餐或夜宵', notes: '輕鬆用餐，準備隔天前往慶州', weather: getWeather('釜山'), id: 44 },
+                ]
+            },
+            // Day 5: 4/29 - 城市移動：前往慶州
+            {
+                date: '2026-04-29',
+                activities: [
+                    { time: '09:00', location: '飯店 Check-out', notes: '準備前往釜山火車站', weather: getWeather('釜山'), id: 50 },
+                    { time: '10:30', location: '搭乘 KTX 或高速巴士前往慶州', notes: '車程約 1 小時 (KTX 轉接或巴士直達)', weather: getWeather('慶州'), id: 51 },
+                    { time: '12:00', location: '慶州市區飯店 Check-in', notes: '在慶州車站或市區飯店 Check-in', weather: getWeather('慶州'), id: 52 },
+                    { time: '14:00', location: '大陵苑 (Daereungwon) 與瞻星台', notes: '參觀慶州最大的古代陵墓，拍照打卡', weather: getWeather('慶州'), id: 53 },
+                    { time: '17:00', location: '黃理團路 (Hwangnidan-gil)', notes: '慶州最新潮的文青街區，有很多咖啡廳', weather: getWeather('慶州'), id: 54 },
+                    { time: '19:30', location: '晚餐：傳統韓定食', notes: '慶州有很多特色的傳統韓定食餐廳', weather: getWeather('慶州'), id: 55 },
+                    { time: '20:30', location: '東宮與月池 (Anapji) 夜景', notes: '欣賞著名的慶州夜景，必去！', weather: getWeather('慶州'), id: 56 },
+                ]
+            },
+            // Day 6: 4/30 - 慶州世界遺產精華
+            {
+                date: '2026-04-30',
+                activities: [
+                    { time: '09:00', location: '佛國寺 (Bulguksa)', notes: '聯合國教科文組織世界遺產，搭公車或計程車前往', weather: getWeather('佛國寺'), id: 60 },
+                    { time: '12:00', location: '石窟庵 (Seokguram)', notes: '與佛國寺聯票，可從佛國寺搭接駁車前往', weather: getWeather('佛國寺'), id: 61 },
+                    { time: '14:30', location: '午餐：佛國寺周邊', notes: '享用簡餐後返回市區', weather: getWeather('慶州'), id: 62 },
+                    { time: '16:00', location: '慶州校村 (Gyeongju Gyochon Village)', notes: '傳統韓屋村，可體驗傳統文化', weather: getWeather('慶州'), id: 63 },
+                    { time: '19:00', location: '慶州市晚餐', notes: '回市區後隨意找餐廳用餐', weather: getWeather('慶州'), id: 64 },
+                ]
+            },
+            // Day 7: 5/1 - 返回釜山與南浦洞
+            {
+                date: '2026-05-01',
+                activities: [
+                    { time: '09:00', location: '慶州飯店 Check-out', notes: '準備返回釜山', weather: getWeather('慶州'), id: 70 },
+                    { time: '10:30', location: '搭乘 KTX 或高速巴士返回釜山', notes: '車程約 1 小時', weather: getWeather('釜山'), id: 71 },
+                    { time: '12:00', location: '南浦洞飯店 Check-in', notes: '將行李放至南浦洞附近的飯店', weather: getWeather('南浦洞'), id: 72 },
+                    { time: '14:00', location: '南浦洞/光復路購物街', notes: '開始釜山最後一波的購物', weather: getWeather('南浦洞'), id: 73 },
+                    { time: '17:00', location: '國際市場 (Gukje Market) 與罐頭市場', notes: '尋找特色小吃與紀念品', weather: getWeather('南浦洞'), id: 74 },
+                    { time: '19:30', location: '晚餐：富平罐頭市場夜市', notes: '大吃一頓當地的夜市小吃', weather: getWeather('南浦洞'), id: 75 },
+                ]
+            },
+            // Day 8: 5/2 - 離境
+            {
+                date: '2026-05-02',
+                activities: [
+                    { time: '09:00', location: '飯店 Check-out', notes: '確認所有行李是否備齊', weather: getWeather('南浦洞'), id: 80 },
+                    { time: '10:30', location: '前往金海機場 (PUS)', notes: '搭乘輕軌或巴士前往機場', weather: getWeather('金海機場'), id: 81 },
+                    { time: '12:30', location: '金海機場辦理登機手續', notes: '準備返台', weather: getWeather('金海機場'), id: 82 },
+                    { time: '14:30', location: '班機起飛返台', notes: '旅途愉快！', weather: getWeather('金海機場'), id: 83 },
+                ]
+            }
+        ],
+        expenses: [
+            // 單位：KRW 韓元
+            { id: 101, desc: '機票 (來回)', amount: 10000, currency: 'TWD', twdAmount: 10000, shared: false, members: [] },
+            { id: 102, desc: '釜山住宿 3晚 (海雲台)', amount: 300000, currency: 'KRW', twdAmount: Math.round(300000 * MOCK_KRW_TO_TWD_RATE), shared: true, members: ['User A', 'User B'] },
+            { id: 103, desc: '慶州住宿 2晚', amount: 180000, currency: 'KRW', twdAmount: Math.round(180000 * MOCK_KRW_TO_TWD_RATE), shared: true, members: ['User A', 'User B'] },
+            { id: 104, desc: '釜山住宿 1晚 (南浦洞)', amount: 120000, currency: 'KRW', twdAmount: Math.round(120000 * MOCK_KRW_TO_TWD_RATE), shared: true, members: ['User A', 'User B'] },
+            { id: 105, desc: '松島纜車/斜坡滑車聯票', amount: 80000, currency: 'KRW', twdAmount: Math.round(80000 * MOCK_KRW_TO_TWD_RATE), shared: true, members: ['User A', 'User B'] },
+            { id: 106, desc: 'KTX/高速巴士交通費用 (估)', amount: 50000, currency: 'KRW', twdAmount: Math.round(50000 * MOCK_KRW_TO_TWD_RATE), shared: true, members: ['User A', 'User B'] }
+        ],
+        backupSpots: [
+            { id: 201, name: '五六島 Skywalk', reason: '如果 D2 太宗台結束後時間還早，可以順道前往。' },
+            { id: 202, name: '梵魚寺 (Beomeosa)', reason: '如果天氣好，可以安排半天時間去體驗傳統寺廟和山景。' }
+        ],
+        // To-Do List (待辦事項)
+        todoList: [
+            { id: 1, text: '護照/機票/飯店預約確認', completed: false },
+            { id: 2, text: '購買 T-money 交通卡 (已完成)', completed: true },
+            { id: 3, text: '兌換韓幣 (KRW)', completed: false },
+        ],
+        // Shopping List (購物清單)
+        shoppingList: [
+            { id: 101, text: '韓國零食：蜂蜜奶油洋芋片', bought: false },
+            { id: 102, text: '釜山魚糕 (Samjin Eomuk)', bought: false },
+            { id: 103, text: '保濕面膜 (已購買)', bought: true },
+        ]
+    };
+
+    // --- Utility Functions ---
+
+    /** Custom Dialog/Confirm Function (取代 alert/confirm) */
+    function customConfirm(message, callback) {
+        const dialog = document.getElementById('custom-dialog');
+        const msg = document.getElementById('dialog-message');
+        const confirmBtn = document.getElementById('dialog-confirm');
+        const cancelBtn = document.getElementById('dialog-cancel');
+        
+        msg.textContent = message;
+        cancelBtn.classList.remove('hidden');
+        
+        // Remove previous listeners
+        confirmBtn.onclick = null;
+        cancelBtn.onclick = null;
+
+        confirmBtn.onclick = () => {
+            dialog.classList.add('hidden');
+            if (callback) callback(true);
+        };
+
+        cancelBtn.onclick = () => {
+            dialog.classList.add('hidden');
+            if (callback) callback(false);
+        };
+
+        dialog.classList.remove('hidden');
+    }
+
+    /** Custom Alert Function (取代 alert) */
+    function customAlert(message) {
+        const dialog = document.getElementById('custom-dialog');
+        const msg = document.getElementById('dialog-message');
+        const confirmBtn = document.getElementById('dialog-confirm');
+        const cancelBtn = document.getElementById('dialog-cancel');
+        
+        msg.textContent = message;
+        cancelBtn.classList.add('hidden');
+        
+        // Remove previous listener and set new one for alert
+        confirmBtn.onclick = null;
+        confirmBtn.onclick = () => dialog.classList.add('hidden');
+
+        dialog.classList.remove('hidden');
+    }
+
+    /** 模擬匯率換算 (UPDATED for KRW) */
+    function convertToTWD(amount, currency) {
+        if (currency === 'KRW') {
+            return Math.round(amount * MOCK_KRW_TO_TWD_RATE);
+        }
+        if (currency === 'TWD') {
+            return amount;
+        }
+        return amount;
+    }
+
+    /** 生成日期範圍 */
+    function generateDates(start, end) {
+        const dates = [];
+        let currentDate = new Date(start);
+        const endDate = new Date(end);
+
+        while (currentDate <= endDate) {
+            dates.push(currentDate.toISOString().split('T')[0]);
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        return dates;
+    }
+    
+    /** 備註展開/收合功能 */
+    function toggleNotes(button, activityId) {
+        const notesDiv = document.getElementById(`notes-${activityId}`);
+        if (notesDiv.classList.contains('hidden')) {
+            notesDiv.classList.remove('hidden');
+            button.textContent = '備註詳情 ▼';
+        } else {
+            notesDiv.classList.add('hidden');
+            button.textContent = '備註詳情 ▶';
+        }
+    }
+
+    /** 設定當前活動 Tab */
+    function setActiveTab(tabName) {
+        currentActiveTab = tabName;
+        renderContent();
+        // Scroll to top to ensure new content is fully visible
+        document.querySelector('main').scrollTop = 0; 
+    }
+
+
+    // --- Rendering Functions ---
+
+    /** 渲染橫向日期選單 (使用藍紫色) */
+    function renderDateNav() {
+        const dateNav = document.getElementById('date-nav');
+        dateNav.innerHTML = '';
+        const dates = generateDates(tripData.startDate, tripData.endDate);
+
+        if (!currentActiveDate || !dates.includes(currentActiveDate)) {
+            currentActiveDate = dates[0] || '';
+        }
+
+        dates.forEach(date => {
+            const dateObj = new Date(date);
+            const dayOfWeek = ['日', '一', '二', '三', '四', '五', '六'][dateObj.getDay()];
+            const isActive = date === currentActiveDate ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-violet-200';
+
+            const button = document.createElement('button');
+            button.className = `inline-flex flex-col items-center justify-center p-3 mx-1 rounded-xl w-20 flex-shrink-0 ${isActive}`;
+            button.innerHTML = `
+                <span class="text-sm font-semibold">${dateObj.getMonth() + 1}/${dateObj.getDate()}</span>
+                <span class="text-xs">${dayOfWeek}</span>
+            `;
+            button.onclick = () => {
+                currentActiveDate = date;
+                renderDateNav(); // Re-render to update active state
+                renderContent(); // Re-render content
+            };
+            dateNav.appendChild(button);
+        });
+
+        // Ensure the active date is visible by scrolling
+        setTimeout(() => {
+            const activeBtn = dateNav.querySelector('.bg-indigo-600');
+            if (activeBtn) {
+                activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+        }, 50);
+    }
+
+    /** 渲染主內容區塊 */
+    function renderContent() {
+        const contentDisplay = document.getElementById('content-display');
+        const dateNavElement = document.getElementById('date-nav');
+        contentDisplay.scrollTop = 0; // Scroll to top on tab change
+
+        closeItineraryModal();
+        closeExpenseModal();
+        closeListModal();
+
+        // Determine if date navigation should be visible
+        const showDateNav = currentActiveTab === 'itinerary' || currentActiveTab === 'map';
+        dateNavElement.classList.toggle('hidden', !showDateNav);
+
+
+        switch (currentActiveTab) {
+            case 'itinerary':
+                renderItinerary();
+                break;
+            case 'expenses':
+                renderExpenses();
+                break;
+            case 'map':
+                renderMap();
+                break;
+            case 'backup':
+                renderBackupSpots();
+                break;
+            case 'shopping':
+                renderShoppingList();
+                break;
+            case 'todo':
+                renderToDoList();
+                break;
+        }
+        
+        // Update tab bar active state
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('text-indigo-600', 'font-semibold');
+            btn.classList.add('text-gray-500');
+            
+            // Highlight itinerary if active tab is one of the bottom nav tabs
+            if (btn.dataset.tab === currentActiveTab) {
+                btn.classList.add('text-indigo-600', 'font-semibold');
+                btn.classList.remove('text-gray-500');
+            }
+        });
+        
+        // Special case: Header tabs (TODO, Shopping) don't change bottom bar. We keep 'itinerary' highlighted if a header tab is active.
+        if (currentActiveTab === 'shopping' || currentActiveTab === 'todo') {
+             document.querySelector('.tab-btn[data-tab="itinerary"]').classList.remove('text-gray-500');
+             document.querySelector('.tab-btn[data-tab="itinerary"]').classList.add('text-indigo-600', 'font-semibold');
+        }
+    }
+
+    /** 渲染待辦事項清單 (獨立頁面) */
+    function renderToDoList() {
+        const contentDisplay = document.getElementById('content-display');
+
+        let todoHtml = `<div class="p-0">
+                            <h2 class="text-xl font-bold mb-4 text-emerald-700">✅ 待辦事項 (行前準備)</h2>
+                            <p class="text-sm text-gray-500 mb-4">點擊項目可標記為「已完成」</p>
+                            <div class="space-y-3">`;
+        
+        if (tripData.todoList.length === 0) {
+             todoHtml += `<div class="p-6 text-center text-gray-500 bg-emerald-50 rounded-xl mt-4 border border-emerald-200">
+                            <p>所有事情都準備好了！您可以開始打包行李了 🧳</p>
+                         </div>`;
+        } else {
+             tripData.todoList.forEach(item => {
+                const checked = item.completed ? 'checked' : '';
+                const textStyle = item.completed ? 'line-through text-gray-400' : 'text-gray-800';
+
+                todoHtml += `
+                    <div class="flex items-center justify-between p-3 rounded-xl shadow-sm bg-white border border-gray-100 transform transition duration-300 hover:shadow-md">
+                        <label class="flex items-center space-x-3 flex-grow cursor-pointer" onclick="toggleListStatus('todo', ${item.id})">
+                            <input type="checkbox" ${checked} class="form-checkbox h-5 w-5 text-emerald-600 rounded pointer-events-none">
+                            <span class="text-base font-medium ${textStyle}">${item.text}</span>
+                        </label>
+                        <button class="text-sm text-red-500 hover:text-red-700 ml-3 p-1" onclick="deleteListItem('todo', ${item.id})">
+                            🗑️
+                        </button>
+                    </div>
+                `;
+            });
+        }
+        
+        todoHtml += `   </div>
+                        <div class="mt-8 text-center">
+                            <button class="btn-minimal bg-emerald-500 text-white w-full max-w-xs mx-auto" onclick="openListModal('todo')">
+                                + 新增待辦事項
+                            </button>
+                         </div>
+                        </div>`;
+        
+        contentDisplay.innerHTML = todoHtml;
+    }
+
+
+    /** 渲染行程表 (移除內嵌的 TODO 列表) */
+    function renderItinerary() {
+        const contentDisplay = document.getElementById('content-display');
+        const dayItinerary = tripData.itineraries.find(i => i.date === currentActiveDate);
+
+        // 1. Title
+        let html = `<h2 class="text-xl font-bold mb-4 text-indigo-700">${currentActiveDate} 行程</h2>`;
+
+        if (!dayItinerary || dayItinerary.activities.length === 0) {
+            html += `<div class="p-6 text-center text-gray-500 bg-violet-50 rounded-xl mt-4 border border-violet-200">
+                        <p class="mb-2">本日尚未安排行程 🍵</p>
+                        <p class="text-xs">點擊下方按鈕新增活動</p>
+                    </div>`;
+        } else {
+            // Sort activities by time
+            dayItinerary.activities.sort((a, b) => a.time.localeCompare(b.time));
+            
+            html += `<div class="space-y-4">`;
+            dayItinerary.activities.forEach((activity, index) => {
+                const weather = activity.weather || getWeather(activity.location);
+                
+                html += `
+                    <div class="bg-white p-3 rounded-xl shadow-lg border-l-4 border-indigo-400 transform transition duration-300 hover:shadow-xl">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-grow">
+                                <p class="text-xl font-extrabold text-indigo-700">${activity.time}</p>
+                                <h3 class="text-base font-semibold mt-0.5 text-gray-800">${activity.location}</h3>
+                                
+                                <div class="mt-2">
+                                    <button class="text-xs text-indigo-600 hover:text-indigo-700 font-medium p-1" onclick="toggleNotes(this, ${activity.id})">備註詳情 ▶</button>
+                                    <div id="notes-${activity.id}" class="text-xs text-gray-700 mt-1 hidden p-1 bg-violet-50 rounded-lg border border-violet-200">
+                                        ${activity.notes}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-center bg-violet-50 p-2 rounded-lg ml-4 flex-shrink-0">
+                                <span class="text-xl">${weather.icon}</span>
+                                <span class="text-xs font-medium text-gray-600">${weather.temp}°C</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-end space-x-2 mt-2">
+                            <button class="text-xs text-blue-500 hover:text-blue-700 p-1" onclick="openItineraryModal(${activity.id}, '${currentActiveDate}')">編輯</button>
+                            <button class="text-xs text-red-500 hover:text-red-700 p-1" onclick="deleteActivity(${activity.id})">刪除</button>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+        }
+
+        // Add New Activity Button (使用藍紫色)
+        html += `<div class="mt-8 text-center">
+                    <button class="btn-minimal bg-indigo-500 text-white w-full max-w-xs mx-auto" onclick="openItineraryModal(null, '${currentActiveDate}')">
+                        + 新增行程項目
+                    </button>
+                </div>`;
+
+        contentDisplay.innerHTML = html;
+    }
+    
+    /** 渲染購物清單 (專門的 Tab) */
+    function renderShoppingList() {
+        const contentDisplay = document.getElementById('content-display');
+        
+        let shoppingHtml = `<h2 class="text-xl font-bold mb-4 text-indigo-700">🛒 購物清單 (待買/紀念品)</h2>
+                            <p class="text-sm text-gray-500 mb-4">點擊項目可標記為「已購買」</p>
+                            <div class="space-y-3">`;
+
+        const list = tripData.shoppingList;
+        
+        if (list.length === 0) {
+             shoppingHtml += `<div class="p-6 text-center text-gray-500 bg-violet-50 rounded-xl mt-4 border border-violet-200">
+                                <p>購物清單是空的！是時候去逛街了 🛍️</p>
+                            </div>`;
+        } else {
+             list.forEach(item => {
+                const checked = item.bought ? 'checked' : '';
+                const textStyle = item.bought ? 'line-through text-gray-400' : 'text-gray-800';
+
+                shoppingHtml += `
+                    <div class="flex items-center justify-between p-3 rounded-xl shadow-sm bg-white border border-gray-100 transform transition duration-300 hover:shadow-md">
+                        <label class="flex items-center space-x-3 flex-grow cursor-pointer" onclick="toggleListStatus('shopping', ${item.id})">
+                            <input type="checkbox" ${checked} class="form-checkbox h-5 w-5 text-indigo-600 rounded pointer-events-none">
+                            <span class="text-base font-medium ${textStyle}">${item.text}</span>
+                        </label>
+                        <button class="text-sm text-red-500 hover:text-red-700 ml-3 p-1" onclick="deleteListItem('shopping', ${item.id})">
+                            🗑️
+                        </button>
+                    </div>
+                `;
+            });
+        }
+        
+        shoppingHtml += `</div>
+                         <div class="mt-8 text-center">
+                            <button class="btn-minimal bg-indigo-500 text-white w-full max-w-xs mx-auto" onclick="openListModal('shopping')">
+                                + 新增購物項目
+                            </button>
+                         </div>`;
+
+        contentDisplay.innerHTML = shoppingHtml;
+    }
+
+    /** 渲染記帳系統 (使用藍紫色, 並支援編輯) */
+    function renderExpenses() {
+        const contentDisplay = document.getElementById('content-display');
+        const totalTWD = tripData.expenses.reduce((sum, item) => sum + item.twdAmount, 0);
+
+        let html = `
+            <h2 class="text-xl font-bold mb-4 text-indigo-700">記帳與分帳系統</h2>
+            
+            <div class="bg-violet-50 p-5 rounded-xl shadow-lg mb-6 border border-violet-200">
+                <p class="text-sm text-gray-500">總花費 (估計台幣)</p>
+                <p class="text-3xl font-extrabold text-indigo-700 mt-1">NT$ ${totalTWD.toLocaleString()}</p>
+                <p class="text-xs text-gray-400 mt-2">匯率: 1 KRW ≈ ${MOCK_KRW_TO_TWD_RATE} TWD (模擬值)</p>
+            </div>
+
+            <h3 class="text-lg font-semibold mb-3 text-gray-700 border-b pb-2">支出詳情列表</h3>
+            <div class="space-y-3">
+        `;
+
+        tripData.expenses.forEach(item => {
+            const isSharedClass = item.shared ? 'bg-indigo-100 border-indigo-400' : 'bg-white border-gray-200';
+            const convertedText = item.currency !== 'TWD' ? 
+                `<span class="text-xs text-gray-500 ml-2">(${item.amount.toLocaleString()} ${item.currency})</span>` : '';
+            
+            const splitInfo = item.shared ? 
+                `<div class="text-xs text-gray-600 mt-2">
+                    <span class="font-bold">分帳給:</span> ${item.members.join(', ')} <br>
+                    <span class="font-bold">每人約:</span> NT$ ${Math.round(item.twdAmount / item.members.length).toLocaleString()}
+                </div>` : '';
+
+            html += `
+                <div class="p-4 rounded-xl shadow-sm border-l-4 ${isSharedClass}">
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium text-gray-800">${item.desc}</span>
+                        <span class="text-lg font-bold text-indigo-700">NT$ ${item.twdAmount.toLocaleString()}</span>
+                    </div>
+                    ${convertedText}
+                    ${splitInfo}
+                    <div class="flex justify-end space-x-2 mt-2">
+                        <button class="text-sm text-blue-500 hover:text-blue-700" onclick="openExpenseModal(${item.id})">編輯</button>
+                        <button class="text-sm text-red-500 hover:text-red-700" onclick="deleteExpense(${item.id})">刪除</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `</div>`;
+        
+        // Add New Expense Button (使用藍紫色)
+        html += `<div class="mt-8 text-center">
+                    <button class="btn-minimal bg-indigo-500 text-white w-full max-w-xs mx-auto" onclick="openExpenseModal(null)">
+                        + 新增支出項目
+                    </button>
+                </div>`;
+                
+        contentDisplay.innerHTML = html;
+    }
+
+    /** 渲染地圖 (使用藍紫色) */
+    function renderMap() {
+        const contentDisplay = document.getElementById('content-display');
+        
+        // 獲取當天所有地點
+        const dayItinerary = tripData.itineraries.find(i => i.date === currentActiveDate);
+        const locations = dayItinerary ? dayItinerary.activities.map(a => a.location).join(' / ') : '無行程地點';
+
+        let html = `
+            <h2 class="text-xl font-bold mb-4 text-indigo-700">行程地點地圖</h2>
+            
+            <div class="bg-violet-50 p-4 rounded-xl shadow-md mb-4 text-sm border border-violet-200">
+                <p class="font-semibold text-indigo-700">📍 本日釘選地點:</p>
+                <p class="text-gray-600 mt-1">${locations}</p>
+                <p class="text-xs text-gray-400 mt-2">💡 (模擬功能) 在實際 App 中，地圖會自動釘選上述所有地點，並標示您的當前位置。</p>
+            </div>
+            
+            <div class="rounded-xl overflow-hidden shadow-lg border border-gray-200 aspect-square">
+                <iframe 
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3151.782806282878!2d140.3846376757182!3d38.16912386926941!2m3!1f0!1f0!2f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x5f8bd4b1c2b53f65%3A0xc68291079541a319!2z5Z-O5bqP5r-e6aeF5r-k5pysIOWIseeZseW6j-iOhiDljpfmtabnu63mnKzjgprjgq_jg7vjgq_jg5Pjgrfjg6vjg4fjg7M!5e0!3m2!1szh-TW!2sjp!4v1704289893976!5m2!1szh-TW!2sjp" 
+                    width="100%" 
+                    height="100%" 
+                    style="border:0;" 
+                    allowfullscreen="" 
+                    loading="lazy"
+                    title="釜山與慶州地圖中心點"
+                ></iframe>
+            </div>
+        `;
+
+        contentDisplay.innerHTML = html;
+    }
+
+    /** 渲染備用景點 (使用藍紫色) */
+    function renderBackupSpots() {
+        const contentDisplay = document.getElementById('content-display');
+        
+        let html = `
+            <h2 class="text-xl font-bold mb-4 text-indigo-700">備用景點清單</h2>
+            
+            <div class="bg-white p-4 rounded-xl shadow-md mb-6 border-t-4 border-indigo-300">
+                <h3 class="text-lg font-semibold mb-3 text-indigo-600">新增備用點</h3>
+                <input type="text" id="backup-name" placeholder="景點名稱 (ex: 五六島 Skywalk)" class="w-full p-2 border-b border-gray-300 focus:border-indigo-500 focus:outline-none mb-3 text-sm">
+                <textarea id="backup-reason" rows="2" placeholder="備用理由 (ex: 如果太宗台結束後時間還早)" class="w-full p-2 border-b border-gray-300 focus:border-indigo-500 focus:outline-none text-sm"></textarea>
+                
+                <button class="btn-minimal bg-indigo-500 text-white w-full mt-4" onclick="addBackupSpot()">
+                    新增景點
+                </button>
+            </div>
+
+            <div class="space-y-3">
+        `;
+
+        if (tripData.backupSpots.length === 0) {
+            html += `<div class="p-6 text-center text-gray-500 bg-violet-50 rounded-xl mt-4 border border-violet-200">
+                        <p>目前沒有備用景點 😌</p>
+                    </div>`;
+        } else {
+            tripData.backupSpots.forEach(spot => {
+                html += `
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-indigo-200">
+                        <h3 class="text-lg font-semibold text-gray-800">${spot.name}</h3>
+                        <p class="text-sm text-gray-600 mt-1"><span class="font-bold text-indigo-600">原因:</span> ${spot.reason}</p>
+                        <button class="text-sm text-red-500 hover:text-red-700 mt-2" onclick="deleteBackupSpot(${spot.id})">刪除</button>
+                    </div>
+                `;
+            });
+        }
+        
+        html += `</div>`;
+        contentDisplay.innerHTML = html;
+    }
+
+    // --- Itinerary CRUD Logic ---
+
+    function openItineraryModal(activityId, date) {
+        const modal = document.getElementById('itinerary-modal');
+        const timeInput = document.getElementById('activity-time');
+        const locationInput = document.getElementById('activity-location');
+        const notesInput = document.getElementById('activity-notes');
+        const modalTitle = document.getElementById('modal-title');
+        const editActivityIndex = document.getElementById('edit-activity-index');
+        const editDate = document.getElementById('edit-date');
+
+        editDate.value = date;
+        editActivityIndex.value = '';
+
+        if (activityId !== null) {
+            const dayItinerary = tripData.itineraries.find(i => i.date === date);
+            const activity = dayItinerary.activities.find(a => a.id === activityId);
+            
+            if (activity) {
+                modalTitle.textContent = '編輯行程';
+                timeInput.value = activity.time;
+                locationInput.value = activity.location;
+                notesInput.value = activity.notes;
+                editActivityIndex.value = activityId;
+            }
+        } else {
+            modalTitle.textContent = '新增行程';
+            timeInput.value = '';
+            locationInput.value = '';
+            notesInput.value = '';
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    function closeItineraryModal() {
+        document.getElementById('itinerary-modal').classList.add('hidden');
+    }
+
+    function saveActivity() {
+        const date = document.getElementById('edit-date').value;
+        const activityId = parseInt(document.getElementById('edit-activity-index').value);
+        const time = document.getElementById('activity-time').value.trim();
+        const location = document.getElementById('activity-location').value.trim();
+        const notes = document.getElementById('activity-notes').value.trim();
+
+        if (!time || !location) {
+            customAlert('時間和地點不能為空！');
+            return;
+        }
+        
+        let dayItinerary = tripData.itineraries.find(i => i.date === date);
+        if (!dayItinerary) {
+            dayItinerary = { date: date, activities: [] };
+            tripData.itineraries.push(dayItinerary);
+            // Re-sort itineraries after potentially adding a new date
+            tripData.itineraries.sort((a, b) => a.date.localeCompare(b.date));
+        }
+
+        const newActivity = { 
+            time, 
+            location, 
+            notes, 
+            weather: getWeather(location) 
+        };
+
+        if (activityId) {
+            // Edit existing
+            const index = dayItinerary.activities.findIndex(a => a.id === activityId);
+            if (index !== -1) {
+                dayItinerary.activities[index] = { ...dayItinerary.activities[index], ...newActivity };
+            }
+        } else {
+            // Add new
+            newActivity.id = Date.now(); 
+            dayItinerary.activities.push(newActivity);
+        }
+
+        closeItineraryModal();
+        renderItinerary();
+        renderDateNav(); // To update date order if a new one was added
+    }
+
+    function deleteActivity(activityId) {
+        customConfirm('確定要刪除此行程項目嗎？', (confirmed) => {
+            if (confirmed) {
+                let dayItinerary = tripData.itineraries.find(i => i.date === currentActiveDate);
+                if (dayItinerary) {
+                    dayItinerary.activities = dayItinerary.activities.filter(a => a.id !== activityId);
+                }
+                renderItinerary();
+            }
+        });
+    }
+
+    // --- List (TODO/Shopping) CRUD Logic ---
+
+    function openListModal(type, itemId = null) {
+        const modal = document.getElementById('list-add-modal');
+        const title = document.getElementById('list-modal-title');
+        const typeInput = document.getElementById('list-modal-type');
+        const textInput = document.getElementById('list-modal-text');
+        const editIdInput = document.getElementById('list-modal-edit-id');
+
+        typeInput.value = type;
+        editIdInput.value = '';
+
+        if (type === 'todo') {
+            title.textContent = '新增待辦事項';
+            textInput.placeholder = '例如：護照/機票/飯店預約確認';
+        } else if (type === 'shopping') {
+            title.textContent = '新增購物項目';
+            textInput.placeholder = '例如：釜山魚糕 (Samjin Eomuk)';
+        }
+        
+        textInput.value = ''; // Always clear for new item
+        
+        modal.classList.remove('hidden');
+    }
+
+    function closeListModal() {
+        document.getElementById('list-add-modal').classList.add('hidden');
+    }
+
+    function saveListItem() {
+        const type = document.getElementById('list-modal-type').value;
+        const text = document.getElementById('list-modal-text').value.trim();
+
+        if (!text) {
+            customAlert('請輸入項目內容！');
+            return;
+        }
+
+        const newItem = { id: Date.now(), text: text };
+        
+        if (type === 'todo') {
+            newItem.completed = false;
+            tripData.todoList.push(newItem);
+            renderToDoList(); // Re-render TODO list
+        } else if (type === 'shopping') {
+            newItem.bought = false;
+            tripData.shoppingList.push(newItem);
+            renderShoppingList(); // Re-render shopping list
+        }
+
+        closeListModal();
+    }
+
+    function deleteListItem(type, id) {
+        const listName = type === 'todo' ? '待辦事項' : '購物項目';
+        customConfirm(`確定要刪除此${listName}嗎？`, (confirmed) => {
+            if (confirmed) {
+                if (type === 'todo') {
+                    tripData.todoList = tripData.todoList.filter(item => item.id !== id);
+                    renderToDoList();
+                } else if (type === 'shopping') {
+                    tripData.shoppingList = tripData.shoppingList.filter(item => item.id !== id);
+                    renderShoppingList();
+                }
+            }
+        });
+    }
+
+    function toggleListStatus(type, id) {
+        if (type === 'todo') {
+            const item = tripData.todoList.find(i => i.id === id);
+            if (item) {
+                item.completed = !item.completed;
+            }
+            renderToDoList();
+        } else if (type === 'shopping') {
+            const item = tripData.shoppingList.find(i => i.id === id);
+            if (item) {
+                item.bought = !item.bought;
+            }
+            renderShoppingList();
+        }
+    }
+
+
+    // --- Expense CRUD Logic (Updated to use Modal) ---
+    
+    // Helper to toggle members input visibility
+    function toggleExpenseMembersVisibility(isShared, elementId = 'expense-members-selection') {
+        document.getElementById(elementId).classList.toggle('hidden', !isShared);
+    }
+
+    /** 打開支出編輯/新增 Modal */
+    function openExpenseModal(expenseId = null) {
+        const modal = document.getElementById('expense-modal');
+        const title = document.getElementById('expense-modal-title');
+        const idInput = document.getElementById('edit-expense-id');
+        const descInput = document.getElementById('expense-modal-desc');
+        const amountInput = document.getElementById('expense-modal-amount');
+        const currencyInput = document.getElementById('expense-modal-currency');
+        const sharedInput = document.getElementById('expense-modal-shared');
+        const membersInput = document.getElementById('expense-modal-members');
+
+        // Reset form to default (for new entry)
+        idInput.value = '';
+        descInput.value = '';
+        amountInput.value = '';
+        currencyInput.value = 'KRW'; // Default to KRW
+        sharedInput.checked = false;
+        membersInput.value = 'User A, User B';
+        toggleExpenseMembersVisibility(false);
+
+        if (expenseId !== null) {
+            const expense = tripData.expenses.find(e => e.id === expenseId);
+            if (expense) {
+                title.textContent = '編輯支出';
+                idInput.value = expense.id;
+                descInput.value = expense.desc;
+                // Display original amount for editing regardless of conversion
+                amountInput.value = expense.amount; 
+                currencyInput.value = expense.currency;
+                sharedInput.checked = expense.shared;
+                membersInput.value = expense.members.join(', ');
+                toggleExpenseMembersVisibility(expense.shared);
+            }
+        } else {
+            title.textContent = '新增支出';
+        }
+
+        modal.classList.remove('hidden');
+
+        // Attach event listener for shared checkbox
+        sharedInput.onchange = (e) => toggleExpenseMembersVisibility(e.target.checked);
+    }
+
+    function closeExpenseModal() {
+        document.getElementById('expense-modal').classList.add('hidden');
+    }
+
+    /** 儲存/更新支出項目 */
+    function saveExpense() {
+        const expenseId = parseInt(document.getElementById('edit-expense-id').value);
+        const desc = document.getElementById('expense-modal-desc').value.trim();
+        const amount = parseFloat(document.getElementById('expense-modal-amount').value);
+        const currency = document.getElementById('expense-modal-currency').value;
+        const shared = document.getElementById('expense-modal-shared').checked;
+        const membersString = document.getElementById('expense-modal-members').value.trim();
+        
+        if (!desc || isNaN(amount) || amount <= 0) {
+            customAlert('請輸入有效的項目描述和金額。');
+            return;
+        }
+
+        let members = [];
+        if (shared) {
+            members = membersString.split(',').map(m => m.trim()).filter(m => m.length > 0);
+            if (members.length === 0) {
+                 customAlert('您勾選了分帳，但沒有輸入成員。');
+                 return;
+            }
+        }
+
+        const expenseData = {
+            desc: desc,
+            amount: amount,
+            currency: currency,
+            twdAmount: convertToTWD(amount, currency), // 執行匯率換算
+            shared: shared,
+            members: members
+        };
+
+        if (expenseId) {
+            // Edit existing
+            const index = tripData.expenses.findIndex(e => e.id === expenseId);
+            if (index !== -1) {
+                tripData.expenses[index] = { ...tripData.expenses[index], ...expenseData };
+            }
+        } else {
+            // Add new
+            expenseData.id = Date.now(); 
+            tripData.expenses.push(expenseData);
+        }
+
+        closeExpenseModal();
+        renderExpenses();
+    }
+
+    function deleteExpense(expenseId) {
+         customConfirm('確定要刪除此筆支出紀錄嗎？', (confirmed) => {
+            if (confirmed) {
+                tripData.expenses = tripData.expenses.filter(e => e.id !== expenseId);
+                renderExpenses();
+            }
+        });
+    }
+
+    // --- Backup Spot CRUD Logic ---
+
+    function addBackupSpot() {
+        const name = document.getElementById('backup-name').value.trim();
+        const reason = document.getElementById('backup-reason').value.trim();
+
+        if (!name || !reason) {
+            customAlert('請填寫景點名稱和備用理由。');
+            return;
+        }
+
+        const newSpot = {
+            id: Date.now(),
+            name: name,
+            reason: reason
+        };
+
+        tripData.backupSpots.push(newSpot);
+
+        // Clear form
+        document.getElementById('backup-name').value = '';
+        document.getElementById('backup-reason').value = '';
+
+        renderBackupSpots();
+    }
+
+    function deleteBackupSpot(spotId) {
+        customConfirm('確定要刪除此備用景點嗎？', (confirmed) => {
+            if (confirmed) {
+                tripData.backupSpots = tripData.backupSpots.filter(s => s.id !== spotId);
+                renderBackupSpots();
+            }
+        });
+    }
+
+    // --- Initialization ---
+
+    function initializeApp() {
+        // 1. Initial Render of Date Nav
+        renderDateNav();
+        
+        // 2. Initial Render of Content
+        // Since both header tabs (todo, shopping) make the itinerary button active visually,
+        // we default to itinerary on load.
+        setActiveTab('itinerary'); 
+
+        // 3. Setup Tab Button Listeners
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                setActiveTab(e.currentTarget.dataset.tab);
+            });
+        });
+    }
+
+    // Start the application when the window loads
+    window.onload = initializeApp;
+
+    // Expose functions to global scope for use in inline HTML handlers
+    window.toggleNotes = toggleNotes; 
+    window.openItineraryModal = openItineraryModal;
+    window.closeItineraryModal = closeItineraryModal;
+    window.saveActivity = saveActivity;
+    window.deleteActivity = deleteActivity;
+    
+    // Expense CRUD functions
+    window.openExpenseModal = openExpenseModal;
+    window.closeExpenseModal = closeExpenseModal;
+    window.saveExpense = saveExpense; // Save/Edit combined function
+    window.deleteExpense = deleteExpense;
+    
+    window.addBackupSpot = addBackupSpot;
+    window.deleteBackupSpot = deleteBackupSpot;
+    
+    // New List functions
+    window.setActiveTab = setActiveTab;
+    window.openListModal = openListModal;
+    window.closeListModal = closeListModal;
+    window.saveListItem = saveListItem;
+    window.deleteListItem = deleteListItem;
+    window.toggleListStatus = toggleListStatus;
+
+</script>
+</body>
+</html>
